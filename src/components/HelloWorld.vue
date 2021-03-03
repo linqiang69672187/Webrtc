@@ -81,6 +81,14 @@ export default {
       }
       this.yourConnection = new webkitRTCPeerConnection(configuration);
       this.theirconnection = new webkitRTCPeerConnection(configuration);
+
+      //创建ICE处理
+      this.yourConnection.onicecandidate = function(event){
+        if (event.candidate){
+          this.theirconnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        }
+      };
+
       this.yourConnection.createOffer(function(offer){
         this.yourConnection.setLocalDescription(offer);
         this.theirconnection.setRemoteDescription(offer);
