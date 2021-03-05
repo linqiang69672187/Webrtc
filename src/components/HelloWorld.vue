@@ -21,19 +21,17 @@ export default {
     if (this.hasUserMedia()){
       let _this =this;
       navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.mozGetUserMedia;
-      navigator.getUserMedia({video:{
-        mandatory:{
-          maxAspectRatio:1.778,
-          minAspectRatio:1.777
-        }
-      },audio:true},function(stream){
+      navigator.getUserMedia({video:true,audio:true},function(stream){
         
-        let video = document.querySelector("video");
+        let video = document.querySelector("#yours");
+   
         try {
           video.src = window.URL.createObjectURL(stream);
+          theirvideo.src = window.URL.createObjectURL(stream);
         } catch (error) {
           console.log(stream);
           video.srcObject = stream;
+        
           if (_this.hasRTCPeerConnection()){
             _this.startPeerConnection(stream);
           }
@@ -79,29 +77,59 @@ export default {
         //开放这段注释来增加ICEservers
         //"iceServers":{{"url":"stun:127.0.0.1:9876"}}
       }
-      this.yourConnection = new webkitRTCPeerConnection(configuration);
-      this.theirconnection = new webkitRTCPeerConnection(configuration);
+      this.yourConnection = new RTCPeerConnection(configuration);
+      this.theirconnection = new RTCPeerConnection(configuration);
 
+      //this.yourConnection = new webkitRTCPeerConnection(configuration);
+     // this.theirconnection = new webkitRTCPeerConnection(configuration);
+      let _this = this;
       //创建ICE处理
       this.yourConnection.onicecandidate = function(event){
         if (event.candidate){
-          this.theirconnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+          _this.theirconnection.addIceCandidate(new RTCIceCandidate(event.candidate));
         }
       };
+   
+
+      this.theirconnection.onicecandidate = function(event){
+        if (event.candidate){
+          _this.yourConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        }
+      };
+      
+     // this.yourConnection.ontrack 
+     this.yourConnection.addStream(stream);
+     this.theirconnection.onaddstream = function(e){
+          let theirsvideo = document.querySelector("#theirs");
+          theirsvideo.srcObject = e.stream;
+     }
+
+     
+     this.theirconnection.addStream(stream);
+     this.yourConnection.onaddstream = function(e){
+          let theirsvideo = document.querySelector("#theirs");
+          theirsvideo.srcObject = e.stream;
+     }
+
+
 
       this.yourConnection.createOffer(function(offer){
-        this.yourConnection.setLocalDescription(offer);
-        this.theirconnection.setRemoteDescription(offer);
+        _this.yourConnection.setLocalDescription(offer);
+        _this.theirconnection.setRemoteDescription(offer);
 
         this.theirconnection.createAnswer(function(offer){
-           this.theirconnection.setLocalDescription(offer);
-           this.yourConnection.setRemoteDescription(offer);
+           _this.theirconnection.setLocalDescription(offer);
+           _this.yourConnection.setRemoteDescription(offer);
         });
 
 
 
       });
-    }
+    },
+    
+ getRemoteStream(e) {
+ 
+ }
 
 
   }
